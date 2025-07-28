@@ -1,0 +1,212 @@
+<div class="tracking-container">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="tracking-header">
+      <h1>Track Your Package</h1>
+      <p>Enter your tracking number to get real-time updates on your parcel's location and delivery status.</p>
+    </div>
+
+    <!-- Search Form -->
+    <mat-card class="search-card">
+      <mat-card-content>
+        <form [formGroup]="trackingForm" (ngSubmit)="onTrack()">
+          <div class="search-form">
+            <mat-form-field appearance="outline" class="tracking-input">
+              <mat-label>Tracking Number</mat-label>
+              <input 
+                matInput 
+                formControlName="trackingNumber" 
+                placeholder="e.g., PMS001234567"
+                [class.mat-form-field-invalid]="trackingForm.get('trackingNumber')?.invalid && trackingForm.get('trackingNumber')?.touched">
+              <mat-icon matSuffix>search</mat-icon>
+              <mat-error *ngIf="trackingForm.get('trackingNumber')?.hasError('required')">
+                Tracking number is required
+              </mat-error>
+              <mat-error *ngIf="trackingForm.get('trackingNumber')?.hasError('pattern')">
+                Please enter a valid tracking number (format: PMS followed by 9 digits)
+              </mat-error>
+              <mat-hint>Format: PMS followed by 9 digits</mat-hint>
+            </mat-form-field>
+            
+            <button 
+              mat-raised-button 
+              color="primary" 
+              type="submit" 
+              [disabled]="!trackingForm.valid || isLoading"
+              class="track-button">
+              <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+              <mat-icon *ngIf="!isLoading">search</mat-icon>
+              <span *ngIf="!isLoading">Track Package</span>
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Loading State -->
+    <div class="loading-section" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Searching for your package...</p>
+    </div>
+
+    <!-- Not Found Message -->
+    <mat-card class="not-found-card" *ngIf="notFound && !isLoading">
+      <mat-card-content>
+        <div class="not-found-content">
+          <mat-icon class="not-found-icon">search_off</mat-icon>
+          <h3>Package Not Found</h3>
+          <p>We couldn't find a package with the tracking number you entered. Please check the number and try again.</p>
+          <button mat-button (click)="clearResults()">Try Again</button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Tracking Results -->
+    <div class="tracking-results" *ngIf="parcel && !isLoading">
+      <!-- Parcel Overview -->
+      <mat-card class="parcel-overview">
+        <mat-card-header>
+          <mat-icon mat-card-avatar [style.color]="getStatusColor(parcel.status)">{{getStatusIcon(parcel.status)}}</mat-icon>
+          <mat-card-title>{{parcel.trackingNumber}}</mat-card-title>
+          <mat-card-subtitle>{{parcel.status | titlecase}}</mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="parcel-info">
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="label">From:</span>
+                <span class="value">{{parcel.senderName}}</span>
+                <small>{{parcel.senderAddress.city}}, {{parcel.senderAddress.state}}</small>
+              </div>
+              
+              <div class="info-item">
+                <span class="label">To:</span>
+                <span class="value">{{parcel.recipientName}}</span>
+                <small>{{parcel.recipientAddress.city}}, {{parcel.recipientAddress.state}}</small>
+              </div>
+              
+              <div class="info-item">
+                <span class="label">Estimated Delivery:</span>
+                <span class="value">{{parcel.estimatedDeliveryDate | date:'fullDate'}}</span>
+                <small>{{parcel.estimatedDeliveryDate | date:'shortTime'}}</small>
+              </div>
+              
+              <div class="info-item" *ngIf="parcel.actualDeliveryDate">
+                <span class="label">Delivered:</span>
+                <span class="value">{{parcel.actualDeliveryDate | date:'fullDate'}}</span>
+                <small>{{parcel.actualDeliveryDate | date:'shortTime'}}</small>
+              </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-section">
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  [style.width.%]="getProgressPercentage(parcel.status)"
+                  [style.background-color]="getStatusColor(parcel.status)">
+                </div>
+              </div>
+              <div class="progress-text">
+                {{getProgressPercentage(parcel.status)}}% Complete
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Package Details -->
+      <mat-card class="package-details">
+        <mat-card-header>
+          <mat-card-title>Package Details</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="details-grid">
+            <div class="detail-item">
+              <mat-icon>inventory_2</mat-icon>
+              <div>
+                <span class="detail-label">Description</span>
+                <span class="detail-value">{{parcel.packageDetails.description}}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <mat-icon>scale</mat-icon>
+              <div>
+                <span class="detail-label">Weight</span>
+                <span class="detail-value">{{parcel.packageDetails.weight}} kg</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <mat-icon>straighten</mat-icon>
+              <div>
+                <span class="detail-label">Dimensions</span>
+                <span class="detail-value">
+                  {{parcel.packageDetails.dimensions.length}} × 
+                  {{parcel.packageDetails.dimensions.width}} × 
+                  {{parcel.packageDetails.dimensions.height}} {{parcel.packageDetails.dimensions.unit}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="detail-item" *ngIf="parcel.packageDetails.isFragile">
+              <mat-icon style="color: #ff9800;">warning</mat-icon>
+              <div>
+                <span class="detail-label">Special Handling</span>
+                <span class="detail-value">Fragile Item</span>
+              </div>
+            </div>
+            
+            <div class="detail-item" *ngIf="parcel.packageDetails.requiresSignature">
+              <mat-icon style="color: #2196f3;">edit</mat-icon>
+              <div>
+                <span class="detail-label">Delivery</span>
+                <span class="detail-value">Signature Required</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Tracking History -->
+      <mat-card class="tracking-history">
+        <mat-card-header>
+          <mat-card-title>Tracking History</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="timeline">
+            <div 
+              class="timeline-item" 
+              *ngFor="let event of parcel.trackingHistory; let last = last"
+              [class.active]="last">
+              <div class="timeline-icon" [style.background-color]="getStatusColor(event.status)">
+                <mat-icon>{{getStatusIcon(event.status)}}</mat-icon>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4>{{event.status | titlecase}}</h4>
+                  <span class="timeline-date">{{event.timestamp | date:'medium'}}</span>
+                </div>
+                <p class="timeline-description">{{event.description}}</p>
+                <div class="timeline-location">
+                  <mat-icon>place</mat-icon>
+                  <span>{{event.location}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button mat-button (click)="clearResults()">Track Another Package</button>
+        <button mat-raised-button color="primary" routerLink="/login">Sign In for More Options</button>
+      </div>
+    </div>
+  </div>
+</div>

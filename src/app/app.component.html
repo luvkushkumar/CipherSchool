@@ -1,0 +1,7 @@
+<div class="app-container">
+  <app-navigation *ngIf="isAuthenticated$ | async"></app-navigation>
+  
+  <main class="main-content" [class.with-nav]="isAuthenticated$ | async">
+    <router-outlet></router-outlet>
+  </main>
+</div>
