@@ -1,0 +1,140 @@
+<div class="dashboard-container">
+  <div class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-section" *ngIf="currentUser$ | async as user">
+      <h1>Welcome back, {{user.firstName}}!</h1>
+      <p class="welcome-subtitle">Here's what's happening with your parcels today</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="dashboard-stats" *ngIf="stats$ | async as stats">
+      <mat-card class="stat-card" *ngIf="isAdmin()">
+        <div class="stat-icon">
+          <mat-icon color="primary">inventory_2</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{stats.total}}</div>
+          <div class="stat-label">Total Parcels</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon">
+          <mat-icon color="warn">schedule</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{stats.pending}}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon">
+          <mat-icon color="accent">flight</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{stats.inTransit}}</div>
+          <div class="stat-label">In Transit</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon">
+          <mat-icon style="color: #4caf50;">check_circle</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{stats.delivered}}</div>
+          <div class="stat-label">Delivered</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" *ngIf="isAdmin()">
+        <div class="stat-icon">
+          <mat-icon style="color: #ff9800;">attach_money</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">${{stats.totalRevenue | number:'1.2-2'}}</div>
+          <div class="stat-label">Revenue</div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <h2>Quick Actions</h2>
+      <div class="action-cards">
+        <mat-card class="action-card" routerLink="/parcels/create" *ngIf="!isCustomer()">
+          <mat-icon>add_box</mat-icon>
+          <h3>Create Parcel</h3>
+          <p>Create a new parcel for shipping</p>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/tracking">
+          <mat-icon>track_changes</mat-icon>
+          <h3>Track Package</h3>
+          <p>Track any package by tracking number</p>
+        </mat-card>
+
+        <mat-card class="action-card" routerLink="/parcels">
+          <mat-icon>list</mat-icon>
+          <h3>View All Parcels</h3>
+          <p>Browse and manage all parcels</p>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Recent Parcels -->
+    <div class="recent-parcels-section">
+      <div class="section-header">
+        <h2>Recent Parcels</h2>
+        <button mat-button routerLink="/parcels" color="primary">View All</button>
+      </div>
+
+      <div class="table-container">
+        <table mat-table [dataSource]="recentParcels$ | async" class="data-table">
+          <ng-container matColumnDef="trackingNumber">
+            <th mat-header-cell *matHeaderCellDef>Tracking Number</th>
+            <td mat-cell *matCellDef="let parcel">{{parcel.trackingNumber}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="recipient">
+            <th mat-header-cell *matHeaderCellDef>Recipient</th>
+            <td mat-cell *matCellDef="let parcel">{{parcel.recipientName}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="destination">
+            <th mat-header-cell *matHeaderCellDef>Destination</th>
+            <td mat-cell *matCellDef="let parcel">{{parcel.recipientAddress.city}}, {{parcel.recipientAddress.state}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let parcel">
+              <mat-chip [color]="getStatusColor(parcel.status)" selected>
+                <mat-icon>{{getStatusIcon(parcel.status)}}</mat-icon>
+                {{parcel.status | titlecase}}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estimatedDelivery">
+            <th mat-header-cell *matHeaderCellDef>Est. Delivery</th>
+            <td mat-cell *matCellDef="let parcel">{{parcel.estimatedDeliveryDate | date:'short'}}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let parcel">
+              <button mat-icon-button [routerLink]="['/parcels', parcel.id]" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['trackingNumber', 'recipient', 'destination', 'status', 'estimatedDelivery', 'actions']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['trackingNumber', 'recipient', 'destination', 'status', 'estimatedDelivery', 'actions'];"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

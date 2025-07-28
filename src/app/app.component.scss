@@ -1,0 +1,21 @@
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+  
+  &.with-nav {
+    margin-top: 64px; // Account for toolbar height
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content.with-nav {
+    margin-top: 56px; // Smaller toolbar on mobile
+  }
+}

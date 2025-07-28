@@ -1,0 +1,53 @@
+<mat-toolbar color="primary" class="app-toolbar">
+  <mat-icon class="logo-icon">local_shipping</mat-icon>
+  <span class="app-title" routerLink="/dashboard">Parcel Management System</span>
+  
+  <span class="toolbar-spacer"></span>
+  
+  <ng-container *ngIf="currentUser$ | async as user">
+    <button mat-button routerLink="/dashboard" routerLinkActive="active">
+      <mat-icon>dashboard</mat-icon>
+      Dashboard
+    </button>
+    
+    <button mat-button routerLink="/parcels" routerLinkActive="active">
+      <mat-icon>inventory_2</mat-icon>
+      Parcels
+    </button>
+    
+    <button mat-button routerLink="/parcels/create" routerLinkActive="active" *ngIf="!isCustomer()">
+      <mat-icon>add_box</mat-icon>
+      Create Parcel
+    </button>
+    
+    <button mat-button routerLink="/tracking" routerLinkActive="active">
+      <mat-icon>track_changes</mat-icon>
+      Track Package
+    </button>
+    
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    
+    <mat-menu #userMenu="matMenu">
+      <div class="user-info">
+        <div class="user-name">{{user.firstName}} {{user.lastName}}</div>
+        <div class="user-role">{{user.role | titlecase}}</div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item>
+        <mat-icon>person</mat-icon>
+        Profile
+      </button>
+      <button mat-menu-item>
+        <mat-icon>settings</mat-icon>
+        Settings
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Logout
+      </button>
+    </mat-menu>
+  </ng-container>
+</mat-toolbar>
